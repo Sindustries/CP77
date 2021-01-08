@@ -1,6 +1,6 @@
 ------------------------------------------------
 --USER CONFIGURABLE VARIABLES
---The conversation rates and exp earned are based off of vanilla rates with only having the tune up perk
+--The conversion rates and exp earned are based off of vanilla rates with only having the tune up perk
 
 --How many to convert and how many of the next tier to return
 compToConvert = 90
@@ -12,16 +12,21 @@ uncommonLimit = 400
 rareLimit = 300
 epicLimit = 200
 
+--Upgrade Components
+doUpgradeComp = false -- EXPERIMENTAL: The scipt will also upgrade Upgrade Components using the same conversion rate
+rareUpLimit = 500
+epicUpLimit = 500
+
 --How much crafting experience to gain when auto upgrading to next tier
 useVanillaExp = true --If true, custom exp rates will be ignored
 --Vanilla values per 1 upgraded component: Uncommon - 18 exp : Rare - 36 exp : Epic - 54 exp : Legendary - 90 exp
 
 --Custom experience rates per stack (ignored if useVanillaExp = true)
---These are defaulted to 10% of vanilla exp gain, my personal preference to avoid level bloat
-uncommonExp = 162
-rareExp = 324
-epicExp = 489
-legendaryExp = 810
+--These are defaulted to vanilla settings
+uncommonExp = 180
+rareExp = 360
+epicExp = 540
+legendaryExp = 900
 
 --Show messages in console
 useDebugPrint = false
@@ -55,7 +60,7 @@ registerForEvent("onUpdate", function()
 				Game.AddToInventory("Items.UncommonMaterial1", compToReturn)
 
 				if useVanillaExp then
-					Game.AddExp("Crafting", 18*compToConvert)
+					Game.AddExp("Crafting", 18*compToReturn)
 				else
 					Game.AddExp("Crafting", uncommonExp)
 				end
@@ -82,7 +87,7 @@ registerForEvent("onUpdate", function()
 				Game.AddToInventory("Items.RareMaterial1", compToReturn)
 
 				if useVanillaExp then
-					Game.AddExp("Crafting", 36*compToConvert)
+					Game.AddExp("Crafting", 36*compToReturn)
 				else
 					Game.AddExp("Crafting", rareExp)
 				end
@@ -109,7 +114,7 @@ registerForEvent("onUpdate", function()
 				Game.AddToInventory("Items.EpicMaterial1", compToReturn)
 
 				if useVanillaExp then
-					Game.AddExp("Crafting", 54*compToConvert)
+					Game.AddExp("Crafting", 54*compToReturn)
 				else
 					Game.AddExp("Crafting", epicExp)
 				end
@@ -124,6 +129,34 @@ registerForEvent("onUpdate", function()
 				end
 	    end
 
+			if doUpgradeComp then
+
+				ts = Game.GetTransactionSystem()
+				itemid = GetSingleton("gameItemID"):FromTDBID(TweakDBID.new("Items.RareMaterial2"))
+				currentCount = ts:GetItemQuantity(player, itemid)
+
+				if (currentCount >= rareUpLimit + compToConvert) then
+					ts:RemoveItem(player, itemid, compToConvert)
+					Game.AddToInventory("Items.EpicMaterial2", compToReturn)
+
+					if useVanillaExp then
+						Game.AddExp("Crafting", 54*compToReturn)
+					else
+						Game.AddExp("Crafting", epicExp)
+					end
+
+					if useDebugPrint then
+						print("Rare Upgrade Components removed: ", compToConvert)
+						print("Epic Upgrade Components added: ", compToReturn)
+					end
+				else
+					if useDebugPrint then
+						print("Not enough Rare Upgrade Components. Current count: ", currentCount)
+					end
+				end
+			end
+
+
 ------------------------------------------------
 --EPIC UPGRADE
 
@@ -136,7 +169,7 @@ registerForEvent("onUpdate", function()
 				Game.AddToInventory("Items.LegendaryMaterial1", compToReturn)
 
 				if useVanillaExp then
-					Game.AddExp("Crafting", 90*compToConvert)
+					Game.AddExp("Crafting", 90*compToReturn)
 				else
 					Game.AddExp("Crafting", legendaryExp)
 				end
@@ -151,6 +184,34 @@ registerForEvent("onUpdate", function()
 				end
 	    end
 
-		end
+			if doUpgradeComp then
 
+				ts = Game.GetTransactionSystem()
+				itemid = GetSingleton("gameItemID"):FromTDBID(TweakDBID.new("Items.EpicMaterial2"))
+				currentCount = ts:GetItemQuantity(player, itemid)
+
+				if (currentCount >= epicUpLimit + compToConvert) then
+					ts:RemoveItem(player, itemid, compToConvert)
+					Game.AddToInventory("Items.LegendaryMaterial2", compToReturn)
+
+					if useVanillaExp then
+						Game.AddExp("Crafting", 90*compToReturn)
+					else
+						Game.AddExp("Crafting", legendaryExp)
+					end
+
+					if useDebugPrint then
+						print("Epic Upgrade Components removed: ", compToConvert)
+						print("Legendary Upgrade Components added: ", compToReturn)
+					end
+				else
+					if useDebugPrint then
+						print("Not enough Epic Upgrade Components. Current count: ", currentCount)
+					end
+				end
+			end
+
+------------------------------------------------
+
+		end
 	end)
